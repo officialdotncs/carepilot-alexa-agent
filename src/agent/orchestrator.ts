@@ -230,7 +230,7 @@ export async function runAgent(store: AgentStore, request: string): Promise<RunR
       const bedrockResultEntry = traceEntry(
         'tool_result',
         bedrockResult.source === 'amazon_bedrock'
-          ? `Bedrock summary received (${bedrockResult.model ?? 'titan'})`
+          ? `Bedrock summary received (${bedrockResult.model ?? 'nova-lite'})`
           : `Bedrock unavailable — using local fallback: ${bedrockResult.reason ?? 'unknown'}`,
         { planId: plan.id, detail: bedrockResult.summary }
       );

@@ -490,12 +490,21 @@ describe('fetchBedrockSummary', () => {
       tasks: [{ title: 'Test', status: 'pending', category: 'scheduling', priority: 'high', approval: 'auto', dueLabel: 'Tomorrow' }],
       recipient: { name: 'Margaret', relationship: 'Mother', provider: 'Dr. Rao', nextAppointmentLabel: 'Oct 21', conditionLabel: 'Hypertension' },
     };
-    // In test env, VITE_SUPABASE_URL may be set from .env but fetch will fail.
-    // The result should always be a valid summary string.
-    const result = await fetchBedrockSummary(input);
-    expect(result.summary).toBeTruthy();
-    expect(typeof result.summary).toBe('string');
-    expect(result.source).toBe('local_fallback');
+    // Temporarily clear env vars to force the no-credentials fallback path.
+    const savedUrl = import.meta.env.VITE_SUPABASE_URL;
+    const savedKey = import.meta.env.VITE_SUPABASE_ANON_KEY;
+    (import.meta.env as Record<string, unknown>).VITE_SUPABASE_URL = '';
+    (import.meta.env as Record<string, unknown>).VITE_SUPABASE_ANON_KEY = '';
+    try {
+      const result = await fetchBedrockSummary(input);
+      expect(result.summary).toBeTruthy();
+      expect(typeof result.summary).toBe('string');
+      expect(result.source).toBe('local_fallback');
+      expect(result.reason).toContain('not configured');
+    } finally {
+      (import.meta.env as Record<string, unknown>).VITE_SUPABASE_URL = savedUrl;
+      (import.meta.env as Record<string, unknown>).VITE_SUPABASE_ANON_KEY = savedKey;
+    }
   });
 
   it('local fallback produces correct counts', async () => {
@@ -508,11 +517,21 @@ describe('fetchBedrockSummary', () => {
       ],
       recipient: { name: 'Margaret', relationship: 'Mother', provider: 'Dr. Rao', nextAppointmentLabel: 'Oct 21', conditionLabel: 'Hypertension' },
     };
-    const result = await fetchBedrockSummary(input);
-    expect(result.summary).toContain('1 pending');
-    expect(result.summary).toContain('1 completed');
-    expect(result.summary).toContain('1 blocked');
-    expect(result.summary).toContain('1 awaiting your approval');
+    // Temporarily clear env vars to force the deterministic local fallback.
+    const savedUrl = import.meta.env.VITE_SUPABASE_URL;
+    const savedKey = import.meta.env.VITE_SUPABASE_ANON_KEY;
+    (import.meta.env as Record<string, unknown>).VITE_SUPABASE_URL = '';
+    (import.meta.env as Record<string, unknown>).VITE_SUPABASE_ANON_KEY = '';
+    try {
+      const result = await fetchBedrockSummary(input);
+      expect(result.summary).toContain('1 pending');
+      expect(result.summary).toContain('1 completed');
+      expect(result.summary).toContain('1 blocked');
+      expect(result.summary).toContain('1 awaiting your approval');
+    } finally {
+      (import.meta.env as Record<string, unknown>).VITE_SUPABASE_URL = savedUrl;
+      (import.meta.env as Record<string, unknown>).VITE_SUPABASE_ANON_KEY = savedKey;
+    }
   });
 });
 
