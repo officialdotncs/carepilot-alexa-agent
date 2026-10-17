@@ -63,8 +63,7 @@ async function signAndCallBedrock(
   body: string,
   accessKey: string,
   secretKey: string,
-  region: string,
-  sessionToken: string | undefined
+  region: string
 ): Promise<{ ok: boolean; status: number; text: string }> {
   const service = 'bedrock';
   const host = `bedrock-runtime.${region}.amazonaws.com`;
@@ -73,8 +72,6 @@ async function signAndCallBedrock(
   const now = new Date();
   const amzDate = now.toISOString().replace(/[:-]|\.\d{3}/g, '');
   const dateStamp = amzDate.slice(0, 8);
-
-  const encoder = new TextEncoder();
 
   // Canonical request
   const canonicalUri = `/model/${modelId}/invoke`;
@@ -98,19 +95,14 @@ async function signAndCallBedrock(
 
   const authHeader = `AWS4-HMAC-SHA256 Credential=${accessKey}/${credentialScope}, SignedHeaders=${signedHeaders}, Signature=${signature}`;
 
-  const headers: Record<string, string> = {
-    'Content-Type': 'application/json',
-    'Host': host,
-    'X-Amz-Date': amzDate,
-    'Authorization': authHeader,
-  };
-  if (sessionToken) {
-    headers['X-Amz-Security-Token'] = sessionToken;
-  }
-
   const resp = await fetch(endpoint, {
     method: 'POST',
-    headers,
+    headers: {
+      'Content-Type': 'application/json',
+      'Host': host,
+      'X-Amz-Date': amzDate,
+      'Authorization': authHeader,
+    },
     body,
   });
   const text = await resp.text();
@@ -153,7 +145,6 @@ Deno.serve(async (req: Request) => {
   const accessKey = Deno.env.get('AWS_ACCESS_KEY_ID');
   const secretKey = Deno.env.get('AWS_SECRET_ACCESS_KEY');
   const region = Deno.env.get('AWS_REGION') || 'us-east-1';
-  const sessionToken = Deno.env.get('AWS_SESSION_TOKEN');
 
   let reqBody: SummaryRequest;
   try {
@@ -211,7 +202,7 @@ Summary:`;
   });
 
   try {
-    const result = await signAndCallBedrock(bedrockBody, accessKey, secretKey, region, sessionToken);
+    const result = await signAndCallBedrock(bedrockBody, accessKey, secretKey, region);
 
     if (!result.ok) {
       return new Response(JSON.stringify({

@@ -478,3 +478,96 @@ describe('duplicate protection', () => {
     }
   });
 });
+
+// ---------------------------------------------------------------------------
+// Bedrock client: fallback behavior
+// ---------------------------------------------------------------------------
+
+describe('fetchBedrockSummary', () => {
+  it('returns local fallback when Supabase env vars are missing', async () => {
+    const { fetchBedrockSummary } = await import('@/agent/bedrock');
+    const input = {
+      tasks: [{ title: 'Test', status: 'pending', category: 'scheduling', priority: 'high', approval: 'auto', dueLabel: 'Tomorrow' }],
+      recipient: { name: 'Margaret', relationship: 'Mother', provider: 'Dr. Rao', nextAppointmentLabel: 'Oct 21', conditionLabel: 'Hypertension' },
+    };
+    // In test env, VITE_SUPABASE_URL may be set from .env but fetch will fail.
+    // The result should always be a valid summary string.
+    const result = await fetchBedrockSummary(input);
+    expect(result.summary).toBeTruthy();
+    expect(typeof result.summary).toBe('string');
+    expect(result.source).toBe('local_fallback');
+  });
+
+  it('local fallback produces correct counts', async () => {
+    const { fetchBedrockSummary } = await import('@/agent/bedrock');
+    const input = {
+      tasks: [
+        { title: 'T1', status: 'pending', category: 'scheduling', priority: 'high', approval: 'auto', dueLabel: 'Tomorrow' },
+        { title: 'T2', status: 'completed', category: 'records', priority: 'medium', approval: 'auto', dueLabel: 'Done' },
+        { title: 'T3', status: 'blocked', category: 'logistics', priority: 'urgent', approval: 'required', dueLabel: 'Stuck' },
+      ],
+      recipient: { name: 'Margaret', relationship: 'Mother', provider: 'Dr. Rao', nextAppointmentLabel: 'Oct 21', conditionLabel: 'Hypertension' },
+    };
+    const result = await fetchBedrockSummary(input);
+    expect(result.summary).toContain('1 pending');
+    expect(result.summary).toContain('1 completed');
+    expect(result.summary).toContain('1 blocked');
+    expect(result.summary).toContain('1 awaiting your approval');
+  });
+});
+
+// ---------------------------------------------------------------------------
+// Edge function source: no AWS_SESSION_TOKEN dependency
+// ---------------------------------------------------------------------------
+
+describe('edge function source code', () => {
+  it('does not reference AWS_SESSION_TOKEN or X-Amz-Security-Token', async () => {
+    const fs = await import('node:fs');
+    const path = await import('node:path');
+    const source = fs.readFileSync(
+      path.resolve('supabase/functions/bedrock-summary/index.ts'),
+      'utf-8'
+    );
+    expect(source).not.toContain('AWS_SESSION_TOKEN');
+    expect(source).not.toContain('X-Amz-Security-Token');
+    expect(source).not.toContain('sessionToken');
+  });
+
+  it('requires exactly three AWS secrets', async () => {
+    const fs = await import('node:fs');
+    const path = await import('node:path');
+    const source = fs.readFileSync(
+      path.resolve('supabase/functions/bedrock-summary/index.ts'),
+      'utf-8'
+    );
+    expect(source).toContain("Deno.env.get('AWS_ACCESS_KEY_ID')");
+    expect(source).toContain("Deno.env.get('AWS_SECRET_ACCESS_KEY')");
+    expect(source).toContain("Deno.env.get('AWS_REGION')");
+    // Count Deno.env.get calls — should be exactly 3, not 4.
+    const envGetCount = (source.match(/Deno\.env\.get\(/g) || []).length;
+    expect(envGetCount).toBe(3);
+  });
+
+  it('canonical headers do not include x-amz-security-token', async () => {
+    const fs = await import('node:fs');
+    const path = await import('node:path');
+    const source = fs.readFileSync(
+      path.resolve('supabase/functions/bedrock-summary/index.ts'),
+      'utf-8'
+    );
+    // The signedHeaders string should only list content-type;host;x-amz-date.
+    expect(source).toContain("'content-type;host;x-amz-date'");
+    expect(source).not.toContain('x-amz-security-token');
+  });
+
+  it('preserves the no-credentials fallback', async () => {
+    const fs = await import('node:fs');
+    const path = await import('node:path');
+    const source = fs.readFileSync(
+      path.resolve('supabase/functions/bedrock-summary/index.ts'),
+      'utf-8'
+    );
+    expect(source).toContain("'AWS credentials not configured'");
+    expect(source).toContain('local_fallback');
+  });
+});
