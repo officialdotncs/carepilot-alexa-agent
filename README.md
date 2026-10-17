@@ -1,6 +1,6 @@
 # CarePilot
 
-A care-coordination agent that helps a caregiver prepare for a family member's medical appointment. It uses a deterministic intent parser and structured tool execution for task management, with Amazon Bedrock (Titan Text Express) for natural-language summaries via a secure server-side boundary.
+A care-coordination agent that helps a caregiver prepare for a family member's medical appointment. It uses a deterministic intent parser and structured tool execution for task management, with Amazon Bedrock (Amazon Nova Lite) for natural-language summaries via a secure server-side boundary.
 
 Built for the AWS Builder mini-challenge.
 
@@ -48,14 +48,14 @@ The following variables are required in `.env` at the project root. They are pub
 │                                                     │
 │  • Reads AWS credentials from Deno.env              │
 │  • Signs SigV4 request using Web Crypto API         │
-│  • Calls Amazon Bedrock (Titan Text Express)        │
+│  • Calls Amazon Bedrock (Amazon Nova Lite)          │
 │  • Validates model output before returning          │
 │  • Returns local fallback if Bedrock unavailable    │
 └─────────────────────┬───────────────────────────────┘
                       │ AWS SigV4
 ┌─────────────────────▼───────────────────────────────┐
 │  Amazon Bedrock (us-east-1)                         │
-│  Model: amazon.titan-text-express-v1                │
+│  Model: amazon.nova-lite-v1:0                       │
 └─────────────────────────────────────────────────────┘
 ```
 
@@ -104,7 +104,7 @@ When the user asks for a status summary, the orchestrator calls the `bedrock-sum
 
 1. Reads `AWS_ACCESS_KEY_ID`, `AWS_SECRET_ACCESS_KEY`, and `AWS_REGION` from Supabase secrets
 2. If credentials are missing, returns a deterministic local fallback immediately
-3. If credentials are present, signs an AWS SigV4 request and calls Titan Text Express
+3. If credentials are present, signs an AWS SigV4 request and calls Amazon Nova Lite
 4. Validates the model output (non-empty string check) before returning it
 5. On any error (network, auth, malformed response), returns the local fallback
 
@@ -113,7 +113,7 @@ The client module (`src/agent/bedrock.ts`) adds a second validation layer and a 
 ### Required AWS Setup
 
 1. **AWS account** with access to Amazon Bedrock in us-east-1
-2. **IAM policy** granting `bedrock:InvokeModel` on `amazon.titan-text-express-v1`
+2. **IAM policy** granting `bedrock:InvokeModel` on `amazon.nova-lite-v1*`
 3. **Model access** enabled in the Bedrock console
 4. **Supabase Edge Function secrets** configured:
    - `AWS_ACCESS_KEY_ID`
@@ -122,14 +122,14 @@ The client module (`src/agent/bedrock.ts`) adds a second validation layer and a 
 
 ### Cost Estimate
 
-- Titan Text Express: ~$0.08 per 1K input tokens, ~$0.20 per 1K output tokens
+- Amazon Nova Lite: ~$0.06 per 1M input tokens, ~$0.24 per 1M output tokens
 - Each summary request: ~150-250 input tokens, ~100-200 output tokens
-- **Per request: ~$0.00004-$0.00006**
+- **Per request: ~$0.00005-$0.00007**
 - Supabase Edge Functions: included in existing plan
 
 ### Current Status
 
-AWS credentials are **not configured** in this environment. The edge function is deployed and returns the local fallback with `"reason": "AWS credentials not configured"`. The app works normally with deterministic local summaries. To activate Bedrock, configure the three secrets listed above.
+AWS credentials are configured. The edge function is deployed and SigV4 signing is verified working. To complete the integration, the IAM policy must be updated to grant `bedrock:InvokeModel` on `amazon.nova-lite-v1:0` (the previous policy was scoped to the now-deprecated `amazon.titan-text-express-v1`). Model access for Nova Lite must also be enabled in the Bedrock console. Until then, the function returns the local fallback with `"reason": "Bedrock returned 403"`.
 
 ## Limitations
 
@@ -144,7 +144,7 @@ AWS credentials are **not configured** in this environment. The edge function is
 ## Test Commands
 
 ```bash
-# Run the test suite (38 tests)
+# Run the test suite (45 tests)
 npm test
 
 # Run tests in watch mode
@@ -174,6 +174,7 @@ The test suite (`src/agent/agent.test.ts`) covers:
 - **Restore summary**: buildRestoreSummary output
 - **Persistence**: saveState/loadState round-trip, clearState, store restore path, fresh start
 - **Duplicate protection**: Creating a task with an existing open title is blocked
+- **Edge function source**: No AWS_SESSION_TOKEN dependency, exactly 3 secrets, correct canonical headers, no-credentials fallback preserved, Nova Lite model ID
 
 ## Demo Instructions
 

@@ -1,7 +1,7 @@
 // ---------------------------------------------------------------------------
 // Edge function: bedrock-summary
 //
-// Proxies a request to Amazon Bedrock (Titan Text Express) to produce a
+// Proxies a request to Amazon Bedrock (Amazon Nova Lite) to produce a
 // natural-language care-coordination summary. Credentials are read from
 // Supabase Edge Function secrets — never from the client, never from .env,
 // never logged.
@@ -21,7 +21,7 @@
 //     "Statement": [{
 //       "Effect": "Allow",
 //       "Action": "bedrock:InvokeModel",
-//       "Resource": "arn:aws:bedrock:*:*:model/amazon.titan-text-express-v1"
+//       "Resource": "arn:aws:bedrock:*:*:model/amazon.nova-lite-v1*"
 //     }]
 //   }
 // ---------------------------------------------------------------------------
@@ -67,14 +67,14 @@ async function signAndCallBedrock(
 ): Promise<{ ok: boolean; status: number; text: string }> {
   const service = 'bedrock';
   const host = `bedrock-runtime.${region}.amazonaws.com`;
-  const modelId = 'amazon.titan-text-express-v1';
-  const endpoint = `https://${host}/model/${modelId}/invoke`;
+  const modelId = 'amazon.nova-lite-v1:0';
   const now = new Date();
   const amzDate = now.toISOString().replace(/[:-]|\.\d{3}/g, '');
   const dateStamp = amzDate.slice(0, 8);
 
-  // Canonical request
-  const canonicalUri = `/model/${modelId}/invoke`;
+  // SigV4 canonical URI must use URI-encoded path. AWS expects %3A for
+  // the colon in the model ID. We use the encoded form for signing only.
+  const canonicalUri = `/model/${modelId.replace(/:/g, '%3A')}/invoke`;
   const canonicalQueryString = '';
   const canonicalHeaders = `content-type:application/json\nhost:${host}\nx-amz-date:${amzDate}\n`;
   const signedHeaders = 'content-type;host;x-amz-date';
@@ -95,7 +95,12 @@ async function signAndCallBedrock(
 
   const authHeader = `AWS4-HMAC-SHA256 Credential=${accessKey}/${credentialScope}, SignedHeaders=${signedHeaders}, Signature=${signature}`;
 
-  const resp = await fetch(endpoint, {
+  // Build the request with the raw (unencoded) colon in the URL path.
+  // Deno's fetch/Request will encode %3A to %253A, so we pass the raw
+  // colon. AWS will normalize it to %3A when computing its canonical
+  // string, matching our signed canonical URI.
+  const url = `https://${host}/model/${modelId}/invoke`;
+  const request = new Request(url, {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',
@@ -105,6 +110,7 @@ async function signAndCallBedrock(
     },
     body,
   });
+  const resp = await fetch(request);
   const text = await resp.text();
   return { ok: resp.ok, status: resp.status, text };
 }
@@ -192,12 +198,18 @@ ${taskLines}
 
 Summary:`;
 
+  // Nova Lite InvokeModel body format: messages array + inferenceConfig.
   const bedrockBody = JSON.stringify({
-    inputText: prompt,
-    textGenerationConfig: {
-      maxTokenCount: 200,
+    messages: [
+      {
+        role: 'user',
+        content: [{ text: prompt }],
+      },
+    ],
+    inferenceConfig: {
+      maxTokens: 200,
       temperature: 0.3,
-      stopSequences: [],
+      topP: 0.9,
     },
   });
 
@@ -216,8 +228,8 @@ Summary:`;
     }
 
     const bedrockResp = JSON.parse(result.text);
-    // Titan Text Express returns: { results: [{ outputText: "..." }] }
-    const modelText = bedrockResp?.results?.[0]?.outputText;
+    // Nova Lite returns: { output: { message: { content: [{ text: "..." }] } } }
+    const modelText = bedrockResp?.output?.message?.content?.[0]?.text;
 
     if (!modelText || typeof modelText !== 'string' || modelText.trim().length === 0) {
       return new Response(JSON.stringify({
@@ -233,7 +245,7 @@ Summary:`;
     return new Response(JSON.stringify({
       summary: modelText.trim(),
       source: 'amazon_bedrock',
-      model: 'amazon.titan-text-express-v1',
+      model: 'amazon.nova-lite-v1:0',
     }), {
       status: 200,
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },

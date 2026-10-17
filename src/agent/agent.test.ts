@@ -570,4 +570,15 @@ describe('edge function source code', () => {
     expect(source).toContain("'AWS credentials not configured'");
     expect(source).toContain('local_fallback');
   });
+
+  it('uses Amazon Nova Lite (not the deprecated Titan model)', async () => {
+    const fs = await import('node:fs');
+    const path = await import('node:path');
+    const source = fs.readFileSync(
+      path.resolve('supabase/functions/bedrock-summary/index.ts'),
+      'utf-8'
+    );
+    expect(source).toContain('amazon.nova-lite-v1:0');
+    expect(source).not.toContain('titan-text-express');
+  });
 });
