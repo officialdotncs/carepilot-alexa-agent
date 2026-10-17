@@ -55,7 +55,7 @@ export function DemoBanner() {
   return (
     <div className="flex items-center gap-2 rounded-lg border border-teal-400/15 bg-teal-500/5 px-3 py-1.5 text-xs text-teal-200/90">
       <span className="inline-block h-1.5 w-1.5 rounded-full bg-teal-300 animate-pulse-soft" />
-      Demo data — simulated experience. AI summaries via Bedrock when configured.
+      Demo data — simulated experience. AI summaries via Amazon Bedrock.
     </div>
   );
 }

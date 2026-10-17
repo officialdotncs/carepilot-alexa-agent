@@ -1,5 +1,4 @@
 import { createContext, useContext, useState } from 'react';
-import type { ReactNode } from 'react';
 import { Sidebar } from '@/components/Sidebar';
 import { Topbar } from '@/components/Topbar';
 import { OverviewView } from '@/views/OverviewView';
@@ -81,7 +80,7 @@ function App() {
           </main>
 
           <footer className="border-t border-white/5 px-6 py-4 text-center text-xs text-slate-600">
-            CarePilot · Phase 3 · Hybrid agent with Amazon Bedrock · Summary via Bedrock when configured
+            CarePilot · Simulated care-coordination agent · Summaries via Amazon Bedrock (Nova Lite)
           </footer>
         </div>
       </div>

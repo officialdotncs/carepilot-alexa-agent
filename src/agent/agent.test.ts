@@ -1,11 +1,11 @@
-import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
+import { describe, it, expect, beforeEach, afterEach } from 'vitest';
 import { createStore, type AgentStore, type AgentState } from '@/agent/store';
 import { runAgent, approveTask, rejectTask, retryAction, buildRestoreSummary } from '@/agent/orchestrator';
 import { parseIntent } from '@/agent/intent';
 import { planFromRequest } from '@/agent/planner';
 import { saveState, loadState, clearState } from '@/agent/storage';
-import { demoTasks, demoHistory } from '@/data/demoData';
-import type { CareTask, TaskStatus, ExecutionRecord } from '@/types';
+
+import type { CareTask, ExecutionRecord } from '@/types';
 
 // ---------------------------------------------------------------------------
 // Helpers
@@ -18,10 +18,6 @@ function makeStore(): AgentStore {
 
 function freshState(): AgentState {
   return makeStore().getState();
-}
-
-function findTask(store: AgentStore, titleFragment: string): CareTask | undefined {
-  return store.getState().tasks.find((t) => t.title.includes(titleFragment));
 }
 
 // ---------------------------------------------------------------------------
@@ -465,7 +461,6 @@ describe('duplicate protection', () => {
     const store = makeStore();
     // First creation succeeds.
     await runAgent(store, 'Create a task to call the pharmacy');
-    const firstCount = store.getState().tasks.length;
     // Second creation with same title should be blocked by the tool.
     await runAgent(store, 'Create a task to call the pharmacy');
     // Task count should not increase (duplicate rejected).

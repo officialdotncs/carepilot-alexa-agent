@@ -186,16 +186,17 @@ export function SettingsView() {
           />
           <p className="mt-4 text-sm text-slate-400">
             CarePilot is a care-coordination agent built for the AWS Builder
-            mini-challenge. It uses Amazon Bedrock (Titan Text Express) for
+            mini-challenge. It is a simulated web experience, not a real
+            Alexa+ integration. It uses Amazon Bedrock (Amazon Nova Lite) for
             natural-language summaries via a Supabase Edge Function, with a
             deterministic local fallback when Bedrock is unavailable.
           </p>
           <div className="mt-4 space-y-2 text-sm">
-            <Row label="Phase" value="3 — Hybrid agent" />
-            <Row label="Build" value="0.3.1" />
+            <Row label="Phase" value="6 — Final release" />
+            <Row label="Build" value="1.0.0" />
             <Row label="Mode" value="Bedrock summary + local tools" />
             <Row label="Persistence" value={storageAvailable ? 'Browser storage (active)' : 'Unavailable'} />
-            <Row label="AI summary" value="Amazon Bedrock (Titan Text Express)" />
+            <Row label="AI summary" value="Amazon Bedrock (Nova Lite)" />
           </div>
         </Card>
       </div>

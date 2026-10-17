@@ -1,5 +1,5 @@
 import { useMemo, useState } from 'react';
-import { Card, SectionHeader, DemoBanner } from '@/components/Card';
+import { Card, DemoBanner } from '@/components/Card';
 import { Icon } from '@/components/Icon';
 import {
   StatusPill,
@@ -12,7 +12,7 @@ import { SourceBadge } from '@/components/SourceBadge';
 import { useStore } from '@/App';
 import { useAgentState } from '@/agent/useAgentState';
 import { approveTask, rejectTask } from '@/agent/orchestrator';
-import type { CareTask, TaskStatus } from '@/types';
+import type { CareTask } from '@/types';
 import { formatDateTime } from '@/lib/format';
 
 type Filter = 'all' | 'pending' | 'in_progress' | 'blocked' | 'completed' | 'approvals';

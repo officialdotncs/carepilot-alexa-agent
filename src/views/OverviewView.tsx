@@ -4,7 +4,6 @@ import { StatTile } from '@/components/StatTile';
 import { Icon } from '@/components/Icon';
 import {
   StatusPill,
-  PriorityPill,
   ApprovalPill,
   CategoryBadge,
 } from '@/components/Badges';

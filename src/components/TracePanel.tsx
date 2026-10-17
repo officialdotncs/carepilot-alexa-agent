@@ -1,7 +1,7 @@
 import { Card, SectionHeader } from '@/components/Card';
 import { Icon, type IconName } from '@/components/Icon';
 import type { TraceEntry, ActionResultKind } from '@/types';
-import { formatDateTime, relativeFromNow } from '@/lib/format';
+import { relativeFromNow } from '@/lib/format';
 
 const kindMeta: Record<TraceEntry['kind'], { icon: IconName; tone: string; label: string }> = {
   request: { icon: 'message', tone: 'text-sky-300 bg-sky-500/10 ring-sky-400/20', label: 'Request' },

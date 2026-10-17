@@ -82,7 +82,7 @@ export function WorkspaceView({
       <div className="flex items-center gap-2 rounded-xl border border-teal-400/15 bg-teal-500/5 px-4 py-2.5 text-xs text-teal-200/90">
         <Icon name="wand" size={14} />
         <span className="font-medium">{AGENT_MODE}</span>
-        <span className="text-teal-200/60">— summaries use Amazon Bedrock when configured.</span>
+        <span className="text-teal-200/60">— summaries use Amazon Bedrock (Nova Lite).</span>
       </div>
 
       {/* Conversation */}

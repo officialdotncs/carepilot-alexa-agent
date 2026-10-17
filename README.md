@@ -4,6 +4,8 @@ A care-coordination agent that helps a caregiver prepare for a family member's m
 
 Built for the AWS Builder mini-challenge.
 
+> **Note:** CarePilot is a simulated web experience for demonstration purposes. It is not a real Alexa+ integration, does not book appointments, order medications, or contact providers. All care-coordination actions are illustrative and confined to the browser. The only real external call is to Amazon Bedrock for natural-language summary generation.
+
 ## Quick Start
 
 ```bash
@@ -133,8 +135,8 @@ AWS credentials are configured and the IAM policy grants `bedrock:InvokeModel` o
 
 ## Limitations
 
+- **This is a simulated experience.** No real-world care actions are executed — no appointments are booked, no medications are ordered, no providers or pharmacies are contacted. All task state changes are in-browser only.
 - Intent parsing is keyword-based, not NLP — it handles specific phrasings and may not understand all variations
-- No real-world side effects (no actual appointments booked, calls made, or messages sent)
 - Care recipient profile is read-only (editing is a future phase)
 - Settings toggles (auto-approve, notifications, quiet hours) are UI-only and do not affect agent behavior yet
 - Bedrock integration only covers the `produce_summary` intent — all other intents use deterministic local tools
@@ -183,10 +185,14 @@ The test suite (`src/agent/agent.test.ts`) covers:
 3. Try these commands (or click the suggestion chips):
    - "Prepare for the appointment" — generates a 7-action plan with approval-gated insurance
    - "Create a task to refill Lisinopril" — creates a medications task requiring approval
-   - "Summarize the current status" — calls the Bedrock edge function (falls back to local summary)
+   - "Summarize the current status" — calls Amazon Bedrock (Nova Lite) for a natural-language summary
    - "What tasks are outstanding?" — lists all open tasks
    - "Generate a checklist" — produces a pre-appointment checklist
 4. Go to **Tasks** to see the approval queue — approve or decline pending tasks
 5. Go to **Execution history** to see chronological records of agent actions
 6. Go to **Settings** to inspect data counts and reset to demo data
 7. Refresh the browser — state persists across reloads (except runs and conversation)
+
+## License
+
+MIT — see [LICENSE](LICENSE).
