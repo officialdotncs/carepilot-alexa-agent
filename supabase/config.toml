@@ -1,0 +1,2 @@
+[functions.bedrock-summary]
+verify_jwt = false

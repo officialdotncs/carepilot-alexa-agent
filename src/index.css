@@ -1,0 +1,101 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  color-scheme: dark;
+}
+
+html,
+body,
+#root {
+  height: 100%;
+}
+
+body {
+  margin: 0;
+  background-color: #070b16;
+  color: #e6edf7;
+  font-family: 'Plus Jakarta Sans', system-ui, sans-serif;
+  -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
+}
+
+/* Refined focus ring */
+:focus-visible {
+  outline: 2px solid rgba(63, 191, 180, 0.7);
+  outline-offset: 2px;
+  border-radius: 6px;
+}
+
+/* Custom scrollbar — calm and unobtrusive */
+::-webkit-scrollbar {
+  width: 10px;
+  height: 10px;
+}
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+::-webkit-scrollbar-thumb {
+  background: rgba(38, 57, 91, 0.6);
+  border-radius: 999px;
+  border: 2px solid transparent;
+  background-clip: padding-box;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: rgba(63, 191, 180, 0.5);
+  background-clip: padding-box;
+}
+
+/* Selection */
+::selection {
+  background: rgba(34, 164, 153, 0.28);
+  color: #ffffff;
+}
+
+@layer components {
+  .cp-surface {
+    @apply rounded-2xl border border-white/5 bg-ink-800/80 backdrop-blur-sm;
+  }
+  .cp-surface-raised {
+    @apply rounded-2xl border border-white/5 bg-ink-700/70 shadow-card backdrop-blur-sm;
+  }
+  .cp-chip {
+    @apply inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-xs font-medium;
+  }
+  .cp-btn {
+    @apply inline-flex items-center justify-center gap-2 rounded-xl px-4 py-2.5 text-sm font-semibold transition-all duration-200 disabled:cursor-not-allowed disabled:opacity-50;
+  }
+  .cp-btn-primary {
+    @apply cp-btn bg-teal-500 text-ink-950 hover:bg-teal-400 active:scale-[0.98] shadow-glow;
+  }
+  .cp-btn-ghost {
+    @apply cp-btn text-slate-300 hover:bg-white/5 hover:text-white;
+  }
+  .cp-btn-outline {
+    @apply cp-btn border border-white/10 text-slate-200 hover:border-teal-400/40 hover:bg-teal-500/5;
+  }
+}
+
+@layer utilities {
+  .cp-text-balance {
+    text-wrap: balance;
+  }
+  .cp-shimmer {
+    position: relative;
+    overflow: hidden;
+  }
+  .cp-shimmer::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    transform: translateX(-100%);
+    background: linear-gradient(
+      90deg,
+      transparent,
+      rgba(255, 255, 255, 0.06),
+      transparent
+    );
+    animation: shimmer 1.6s infinite;
+  }
+}
